@@ -4,6 +4,7 @@
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/uaccess.h>
+#include <linux/syscalls.h>
 
 #define DEVICE_NAME "killerProcess"
 #define CLASS_NAME "killerProcess"
