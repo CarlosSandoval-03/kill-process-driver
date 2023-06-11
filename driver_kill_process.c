@@ -87,7 +87,8 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 
 	// Get pid from string
 	int pid = -1;
-	if (sscanf(message, "%d", &pid) != 1) {
+	sscanf(message, "%d", &pid);
+	if (pid == -1) {
 		printk(KERN_INFO "killerProcess: Failed to get pid from message\n");
 		return len;
 	}
