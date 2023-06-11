@@ -78,10 +78,21 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 {
 	printk(KERN_INFO "killerProcess: Received %zu characters from the user\n", len);
 
-	// Kill the process
-	// get message from user and store it in pid
+	// Get string from user
+	char message[len];
+	if (copy_from_user(message, buffer, len) != 0) {
+		printk(KERN_INFO "killerProcess: Failed to copy message from user\n");
+		return -EFAULT;
+	}
+
+	// Get pid from string
 	int pid = -1;
-	copy_from_user(&pid, buffer, len);
+	if (sscanf(message, "%d", &pid) != 1) {
+		printk(KERN_INFO "killerProcess: Failed to get pid from message\n");
+		return len;
+	}
+
+	// Kill the process
 	printk(KERN_INFO "killerProcess: Killing process %d\n", pid);
 
 	if (pid < 0) {

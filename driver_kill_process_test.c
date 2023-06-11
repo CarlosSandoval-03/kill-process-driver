@@ -5,6 +5,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#define BUFFER_SIZE 256
+
 long get_int_from_input();
 
 int main()
@@ -21,7 +23,10 @@ int main()
 
 	printf("Killing process with ID: %ld, press ENTER to continue\n", pid);
 	getchar(); // Wait for user input before continuing
-	int ret = write(fd, &pid, sizeof(pid));
+
+	char message[BUFFER_SIZE] = { 0 };
+	sprintf(message, "%ld", pid);
+	int ret = write(fd, message, strlen(message));
 	if (ret < 0) {
 		perror("Failed to write the message to the device.");
 		return errno;
