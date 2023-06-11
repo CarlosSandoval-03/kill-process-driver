@@ -4,7 +4,7 @@
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/uaccess.h>
-#include <linux/syscalls.h>
+#include <linux/sched/signal.h>
 
 #define DEVICE_NAME "killerProcess"
 #define CLASS_NAME "killerProcess"
@@ -82,8 +82,20 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 	int pid = -1;
 	kstrtoint(buffer, 10, &pid);
 	printk(KERN_INFO "killerProcess: Killing process %d\n", pid);
-	sys_kill(pid, SIGKILL); // Kill the process
-	printk(KERN_INFO "killerProcess: Process %d not found\n", pid);
+
+	struct task_struct *task;
+	rcu_read_lock(); // Lock the task list
+
+	task = pid_task(find_vpid(pid), PIDTYPE_PID); // Find the task with the given pid and store it in task
+	if (task == NULL) {
+		printk(KERN_INFO "killerProcess: Process %d not found\n", pid);
+		rcu_read_unlock();
+		return len;
+	}
+
+	send_sig_info(SIGKILL, SEND_SIG_FORCED, task); // Send the SIGKILL signal to the task
+	rcu_read_unlock(); // Unlock the task list
+	printk(KERN_INFO "killerProcess: Process %d killed\n", pid);
 	return len;
 }
 
