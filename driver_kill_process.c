@@ -8,7 +8,7 @@
 #define DEVICE_NAME "killerProcess"
 #define CLASS_NAME "killerProcess"
 
-MODULE_LICENSE("MIT");
+MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Carlos Sandoval");
 MODULE_DESCRIPTION("A simple Linux char driver that kills a process");
 MODULE_VERSION("0.1");
