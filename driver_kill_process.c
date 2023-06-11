@@ -14,18 +14,15 @@ MODULE_DESCRIPTION("A simple Linux char driver that kills a process");
 MODULE_VERSION("0.1");
 
 static int majorNumber;
-static char message[256] = { 0 };
-static short sizeOfMessage;
 static int numberOpens = 0;
 static struct class *killerProcessClass = NULL;
 static struct device *killerProcessDevice = NULL;
 
 static int dev_open(struct inode *, struct file *);
 static int dev_release(struct inode *, struct file *);
-static ssize_t dev_read(struct file *, char *, size_t, loff_t *);
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset);
 
-static struct file_operations fops = { .open = dev_open, .read = dev_read, .write = dev_write, .release = dev_release };
+static struct file_operations fops = { .open = dev_open, .write = dev_write, .release = dev_release };
 
 static int __init killer_process_init(void)
 {
@@ -76,25 +73,28 @@ static int dev_open(struct inode *inodep, struct file *filep)
 	return 0;
 }
 
-static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *offset)
-{
-	int error_count = 0;
-	error_count = copy_to_user(buffer, message, sizeOfMessage);
-
-	if (error_count == 0) {
-		printk(KERN_INFO "killerProcess: Sent %d characters to the user\n", sizeOfMessage);
-		return (sizeOfMessage = 0);
-	} else {
-		printk(KERN_INFO "killerProcess: Failed to send %d characters to the user\n", error_count);
-		return -EFAULT;
-	}
-}
-
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset)
 {
-	sprintf(message, "%s(%zu letters)", buffer, len);
-	sizeOfMessage = strlen(message);
 	printk(KERN_INFO "killerProcess: Received %zu characters from the user\n", len);
+
+	// Kill the process
+	int pid = 0;
+	kstrtoint(buffer, 10, &pid);
+	printk(KERN_INFO "killerProcess: Killing process %d\n", pid);
+
+	struct task_struct *task;
+	for_each_process(task)
+	{
+		if (task->pid == pid) {
+			printk(KERN_INFO "killerProcess: Found process %d\n", pid);
+			send_sig(SIGKILL, task, 0);
+			printk("killerProcess: Process %d killed\n", pid);
+
+			return len;
+		}
+	}
+
+	printk(KERN_INFO "killerProcess: Process %d not found\n", pid);
 	return len;
 }
 
