@@ -78,22 +78,10 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 	printk(KERN_INFO "killerProcess: Received %zu characters from the user\n", len);
 
 	// Kill the process
-	int pid = 0;
+	int pid = -1;
 	kstrtoint(buffer, 10, &pid);
 	printk(KERN_INFO "killerProcess: Killing process %d\n", pid);
-
-	struct task_struct *task;
-	for_each_process(task)
-	{
-		if (task->pid == pid) {
-			printk(KERN_INFO "killerProcess: Found process %d\n", pid);
-			send_sig(SIGKILL, task, 0);
-			printk("killerProcess: Process %d killed\n", pid);
-
-			return len;
-		}
-	}
-
+	sys_kill(pid, SIGKILL); // Kill the process
 	printk(KERN_INFO "killerProcess: Process %d not found\n", pid);
 	return len;
 }
