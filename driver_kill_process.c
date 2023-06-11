@@ -16,6 +16,8 @@ MODULE_VERSION("0.1");
 
 static int majorNumber;
 static int numberOpens = 0;
+static char message[256] = { 0 };
+static short size_of_message;
 static struct class *killerProcessClass = NULL;
 static struct device *killerProcessDevice = NULL;
 
@@ -79,7 +81,6 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 	printk(KERN_INFO "killerProcess: Received %zu characters from the user\n", len);
 
 	// Get string from user
-	char message[len];
 	if (copy_from_user(message, buffer, len) != 0) {
 		printk(KERN_INFO "killerProcess: Failed to copy message from user\n");
 		return -EFAULT;
@@ -87,9 +88,13 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 
 	// Get pid from string
 	int pid = -1;
-	sscanf(message, "%d", &pid);
+	if (kstrtoint(message, 10, &pid) < 0) {
+		printk(KERN_INFO "killerProcess: Failed to convert string to int\n");
+		return -EFAULT;
+	}
+
 	if (pid == -1) {
-		printk(KERN_INFO "killerProcess: Failed to get pid from message\n");
+		printk(KERN_INFO "killerProcess: Invalid pid\n");
 		return len;
 	}
 
