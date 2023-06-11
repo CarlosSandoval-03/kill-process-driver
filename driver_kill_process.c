@@ -27,7 +27,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 
 static struct file_operations fops = { .open = dev_open, .read = dev_read, .write = dev_write, .release = dev_release };
 
-static int __init killerProcess_init(void)
+static int __init killer_process_init(void)
 {
 	printk(KERN_INFO "killerProcess: Initializing the killerProcess LKM\n");
 
@@ -60,7 +60,7 @@ static int __init killerProcess_init(void)
 	return 0;
 }
 
-static void __exit killerProcess_exit(void)
+static void __exit killer_process_exit(void)
 {
 	device_destroy(killerProcessClass, MKDEV(majorNumber, 0));
 	class_unregister(killerProcessClass);
@@ -68,3 +68,41 @@ static void __exit killerProcess_exit(void)
 	unregister_chrdev(majorNumber, DEVICE_NAME);
 	printk(KERN_INFO "killerProcess: Goodbye from the LKM!\n");
 }
+
+static int dev_open(struct inode *inodep, struct file *filep)
+{
+	numberOpens++;
+	printk(KERN_INFO "killerProcess: Device has been opened %d time(s)\n", numberOpens);
+	return 0;
+}
+
+static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *offset)
+{
+	int error_count = 0;
+	error_count = copy_to_user(buffer, message, sizeOfMessage);
+
+	if (error_count == 0) {
+		printk(KERN_INFO "killerProcess: Sent %d characters to the user\n", sizeOfMessage);
+		return (sizeOfMessage = 0);
+	} else {
+		printk(KERN_INFO "killerProcess: Failed to send %d characters to the user\n", error_count);
+		return -EFAULT;
+	}
+}
+
+static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset)
+{
+	sprintf(message, "%s(%zu letters)", buffer, len);
+	sizeOfMessage = strlen(message);
+	printk(KERN_INFO "killerProcess: Received %zu characters from the user\n", len);
+	return len;
+}
+
+static int dev_release(struct inode *inodep, struct file *filep)
+{
+	printk(KERN_INFO "killerProcess: Device successfully closed\n");
+	return 0;
+}
+
+module_init(killer_process_init);
+module_exit(killer_process_exit);
