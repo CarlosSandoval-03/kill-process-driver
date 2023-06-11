@@ -6,4 +6,5 @@ all:
 	$(MAKE) -C $(KDIR) M=$$PWD
 endif
 
-clean: rm *.o
+clean:
+	$(shell rm *.o)
