@@ -17,7 +17,6 @@ MODULE_VERSION("0.1");
 static int majorNumber;
 static int numberOpens = 0;
 static char message[256] = { 0 };
-static short size_of_message;
 static struct class *killerProcessClass = NULL;
 static struct device *killerProcessDevice = NULL;
 
